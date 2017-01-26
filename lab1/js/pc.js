@@ -16,7 +16,20 @@ function pc(){
     //...
 
     var x = d3.scale.ordinal().rangePoints([0, width], 1),
-        y = {};
+        y = {}
+
+    var dimensions = [
+        "Household income",
+        "Employment rate",
+        "Unemployment rate",
+        "Personal earnings",
+        "Quality of support network",
+        "Student skills",
+        "Water quality",
+        "Voter turnout",
+        "Self-reported health",
+        "Life satisfaction"
+    ]
         
 
     var line = d3.svg.line(),
@@ -32,16 +45,19 @@ function pc(){
 
     //Load data
     d3.csv("data/OECD-better-life-index-hi.csv", function(data) {
-
         self.data = data;
 
-        // Extract the list of dimensions and create a scale for each.
-        //...
-        x.domain(dimensions = d3.keys([0,1,2,3,4]).filter(function(d) {
-            return [(y[d] = d3.scale.linear()
-                .domain(d3.extent([0,1]))
-                .range([height, 0]))];
-        }));
+        dimensions.forEach(function (d) {
+
+            y[d] = d3.scale.linear()
+                .domain(d3.extent(data, function (row) {
+                    return Number(row[d])
+                }))
+                .range([height, 0])
+                .nice()
+        })
+
+        x.domain(dimensions);
 
         draw();
     });
@@ -51,8 +67,9 @@ function pc(){
         background = svg.append("svg:g")
             .attr("class", "background")
             .selectAll("path")
-            //add the data and append the path 
-            //...
+            .data(self.data)
+            .enter().append("svg:path")
+            .attr("d", path)
             .on("mousemove", function(d){})
             .on("mouseout", function(){});
 
@@ -60,8 +77,9 @@ function pc(){
         foreground = svg.append("svg:g")
             .attr("class", "foreground")
             .selectAll("path")
-            //add the data and append the path 
-            //...
+            .data(self.data)
+            .enter().append("svg:path")
+            .attr("d", path)
             .on("mousemove", function(){})
             .on("mouseout", function(){});
 
@@ -75,7 +93,9 @@ function pc(){
         // Add an axis and title.
         g.append("svg:g")
             .attr("class", "axis")
-            //add scale
+            .each(function (d) {
+                d3.select(this).call(axis.scale(y[d]))
+            })
             .append("svg:text")
             .attr("text-anchor", "middle")
             .attr("y", -9)

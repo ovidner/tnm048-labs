@@ -14,11 +14,18 @@ function sp(){
     //initialize tooltip
     //...
 
+    var xAttr = "Employment rate"
+    var yAttr = "Water quality"
+    var rAttr = "Life satisfaction"
+
     var x = d3.scale.linear()
         .range([0, width]);
 
     var y = d3.scale.linear()
         .range([height, 0]);
+
+    var r = d3.scale.linear()
+        .range([1, 10])
 
     var xAxis = d3.svg.axis()
         .scale(x)
@@ -37,9 +44,16 @@ function sp(){
     //Load data
     d3.csv("data/OECD-better-life-index-hi.csv", function(error, data) {
         self.data = data;
-        
-        //define the domain of the scatter plot axes
-        //...
+
+        var selectAttr = function (attr) {
+            return function (row) {
+                return row[attr]
+            }
+        }
+
+        x.domain(d3.extent(data, selectAttr(xAttr))).nice()
+        y.domain(d3.extent(data, selectAttr(yAttr))).nice()
+        r.domain(d3.extent(data, selectAttr(rAttr))).nice()
         
         draw();
 
@@ -56,7 +70,8 @@ function sp(){
             .append("text")
             .attr("class", "label")
             .attr("x", width)
-            .attr("y", -6);
+            .attr("y", -6)
+            .text(xAttr)
             
         // Add y axis and title.
         svg.append("g")
@@ -66,13 +81,26 @@ function sp(){
             .attr("class", "label")
             .attr("transform", "rotate(-90)")
             .attr("y", 6)
-            .attr("dy", ".71em");
+            .attr("dy", ".71em")
+            .text(yAttr)
             
         // Add the scatter dots.
         svg.selectAll(".dot")
             .data(self.data)
             .enter().append("circle")
             .attr("class", "dot")
+            .attr("cx", function (data) {
+                return x(data[xAttr])
+            })
+            .attr("cy", function (data) {
+                return y(data[yAttr])
+            })
+            .attr("r", function (data) {
+                return r(data[rAttr])
+            })
+            .style("fill", function (data) {
+                return countryColors[data["Country"]]
+            })
             //Define the x and y coordinate data values for the dots
             //...
             //tooltip
