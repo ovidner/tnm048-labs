@@ -1,4 +1,4 @@
-function sp(){
+function sp(bliCountries, countryColor){
 
     var self = this; // for internal d3 functions
 
@@ -18,6 +18,8 @@ function sp(){
     var yAttr = "Water quality"
     var rAttr = "Life satisfaction"
 
+    var selectAttr = (attr) => (row) => row[attr]
+
     var x = d3.scale.linear()
         .range([0, width]);
 
@@ -25,7 +27,11 @@ function sp(){
         .range([height, 0]);
 
     var r = d3.scale.linear()
-        .range([1, 10])
+        .range([1, 12])
+
+    x.domain(d3.extent(bliCountries, selectAttr(xAttr))).nice()
+    y.domain(d3.extent(bliCountries, selectAttr(yAttr))).nice()
+    r.domain(d3.extent(bliCountries, selectAttr(rAttr))).nice()
 
     var xAxis = d3.svg.axis()
         .scale(x)
@@ -41,27 +47,9 @@ function sp(){
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    //Load data
-    d3.csv("data/OECD-better-life-index-hi.csv", function(error, data) {
-        self.data = data;
+    let dots
 
-        var selectAttr = function (attr) {
-            return function (row) {
-                return row[attr]
-            }
-        }
-
-        x.domain(d3.extent(data, selectAttr(xAttr))).nice()
-        y.domain(d3.extent(data, selectAttr(yAttr))).nice()
-        r.domain(d3.extent(data, selectAttr(rAttr))).nice()
-        
-        draw();
-
-    });
-
-    function draw()
-    {
-        
+    this.draw = () => {
         // Add x axis and title.
         svg.append("g")
             .attr("class", "x axis")
@@ -85,46 +73,34 @@ function sp(){
             .text(yAttr)
             
         // Add the scatter dots.
-        svg.selectAll(".dot")
-            .data(self.data)
+        dots = svg.selectAll(".dot")
+            .data(bliCountries)
             .enter().append("circle")
             .attr("class", "dot")
-            .attr("cx", function (data) {
-                return x(data[xAttr])
+            .attr("cx", (d) => x(d[xAttr]))
+            .attr("cy", (d) => y(d[yAttr]))
+            .attr("r", (d) => r(d[rAttr]))
+            .style("fill", (d) => countryColor(d["Country"]))
+
+            .on("mousemove", (d) => {
+                window.showTooltip(d['Country'])
             })
-            .attr("cy", function (data) {
-                return y(data[yAttr])
+            .on("mouseout", (d) => {
+                window.hideTooltip()
             })
-            .attr("r", function (data) {
-                return r(data[rAttr])
-            })
-            .style("fill", function (data) {
-                return countryColors[data["Country"]]
-            })
-            //Define the x and y coordinate data values for the dots
-            //...
-            //tooltip
-            .on("mousemove", function(d) {
-                //...    
-            })
-            .on("mouseout", function(d) {
-                //...   
-            })
-            .on("click",  function(d) {
-                //...    
+            .on("click", (d) => {
+                window.selectCountries([d['Country']])
             });
     }
 
     //method for selecting the dot from other components
-    this.selectDot = function(value){
-        //...
-    };
-    
-    //method for selecting features of other components
-    function selFeature(value){
-        //...
+    this.selectCountries = (selectedCountries) => {
+        dots.style('opacity', (d) => (
+            selectedCountries.find((c) => (
+                c === d['Country']
+            )) ? 1 : 0.2
+        ))
     }
-
 }
 
 

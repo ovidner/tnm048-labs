@@ -1,4 +1,4 @@
-function pc(){
+function pc(bliCountries, countryColor){
 
     var self = this; // for internal d3 functions
 
@@ -30,7 +30,15 @@ function pc(){
         "Self-reported health",
         "Life satisfaction"
     ]
-        
+
+    dimensions.forEach((d) => {
+        y[d] = d3.scale.linear()
+            .domain(d3.extent(bliCountries, (row) => Number(row[d])))
+            .range([height, 0])
+            .nice()
+    })
+
+    x.domain(dimensions);
 
     var line = d3.svg.line(),
         axis = d3.svg.axis().orient("left"),
@@ -43,52 +51,37 @@ function pc(){
         .append("svg:g")
         .attr("transform", "translate(" + margin[3] + "," + margin[0] + ")");
 
-    //Load data
-    d3.csv("data/OECD-better-life-index-hi.csv", function(data) {
-        self.data = data;
-
-        dimensions.forEach(function (d) {
-
-            y[d] = d3.scale.linear()
-                .domain(d3.extent(data, function (row) {
-                    return Number(row[d])
-                }))
-                .range([height, 0])
-                .nice()
-        })
-
-        x.domain(dimensions);
-
-        draw();
-    });
-
-    function draw(){
+    this.draw = function () {
         // Add grey background lines for context.
         background = svg.append("svg:g")
             .attr("class", "background")
             .selectAll("path")
-            .data(self.data)
+            .data(bliCountries)
             .enter().append("svg:path")
             .attr("d", path)
-            .on("mousemove", function(d){})
-            .on("mouseout", function(){});
 
         // Add blue foreground lines for focus.
         foreground = svg.append("svg:g")
             .attr("class", "foreground")
             .selectAll("path")
-            .data(self.data)
+            .data(bliCountries)
             .enter().append("svg:path")
             .attr("d", path)
-            .on("mousemove", function(){})
-            .on("mouseout", function(){});
+            .attr('title', (d) => d['Country'])
+            .style("stroke", (d) => countryColor(d["Country"]))
+            .on("mousemove", (d) => {
+                window.showTooltip(d['Country'])
+            })
+            .on("mouseout", (d) => {
+                window.hideTooltip()
+            })
 
         // Add a group element for each dimension.
         var g = svg.selectAll(".dimension")
             .data(dimensions)
             .enter().append("svg:g")
             .attr("class", "dimension")
-            .attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+            .attr("transform", (d) => "translate(" + x(d) + ")");
             
         // Add an axis and title.
         g.append("svg:g")
@@ -112,28 +105,30 @@ function pc(){
 
     // Returns the path for a given data point.
     function path(d) {
-        return line(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+        return line(dimensions.map((p) => [x(p), y[p](d[p])]));
     }
 
     // Handles a brush event, toggling the display of foreground lines.
     function brush() {
-        var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
-            extents = actives.map(function(p) { return y[p].brush.extent(); });
-        foreground.style("display", function(d) {
-            return actives.every(function(p, i) {
-                return extents[i][0] <= d[p] && d[p] <= extents[i][1];
-            }) ? null : "none";
-        });
+        var actives = dimensions.filter((p) => !y[p].brush.empty()),
+            extents = actives.map((p) => y[p].brush.extent());
+
+        window.selectCountries(
+            bliCountries
+                .filter((d) => (
+                    actives.every((p, i) => (
+                        extents[i][0] <= d[p] && d[p] <= extents[i][1]
+                    ))))
+                .map((d) => d['Country'])
+        )
     }
 
-    //method for selecting the pololyne from other components	
-    this.selectLine = function(value){
-        //...
+    //method for selecting the pololyne from other components
+    this.selectCountries = (selectedCountries) => {
+        foreground.style('display', (d) => (
+            selectedCountries.find((c) => (
+                c === d['Country']
+            )) ? null : 'none'
+        ))
     };
-    
-    //method for selecting features of other components
-    function selFeature(value){
-        //...
-    };
-
 }

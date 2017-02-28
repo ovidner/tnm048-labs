@@ -10,6 +10,10 @@
    Base styles: opinionated defaults
    ========================================================================== */
 
+div.tooltip {
+    position: absolute;
+}
+
 html,
 button,
 input,
