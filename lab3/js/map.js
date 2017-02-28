@@ -12,11 +12,7 @@ function map(data) {
 
     var curr_mag = 4;
 
-    var format = d3.time.format.utc("%Y-%m-%dT%H:%M:%S.%LZ");
-
-    var timeExt = d3.extent(data.map(function (d) {
-        return format.parse(d.time);
-    }));
+    var timeExt = d3.extent(data.map((d) => d.time));
 
     var filterdData = data;
 
@@ -39,14 +35,7 @@ function map(data) {
     //Creates a new geographic path generator and assing the projection        
     var path = d3.geo.path().projection(projection);
 
-    //Formats the data in a feature collection trougth geoFormat()
-    var geoData = {type: "FeatureCollection", features: geoFormat(data)};
-
-    //Loads geo data
-    d3.json("data/world-topo.json", function (error, world) {
-        var countries = topojson.feature(world, world.objects.countries).features;
-        draw(countries);
-    });
+    let points
 
     //Calls the filtering function 
     d3.select("#slider").on("input", function () {
@@ -54,17 +43,32 @@ function map(data) {
     });
 
     //Formats the data in a feature collection
-    function geoFormat(array) {
-        var data = [];
-        array.map(function (d, i) {
-            //Complete the code
-        });
-        return data;
+    let geoFormat = (array) => {
+        return array.map((d) => ({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [d.lon, d.lat]
+            },
+            properties: {
+                place: d.place,
+                mag: d.mag,
+                time: d.time
+            }
+        }));
     }
 
+    //Loads geo data
+    d3.json("data/world-topo.json", function (error, world) {
+        var countries = topojson.feature(world, world.objects.countries).features;
+        draw(countries);
+    });
+
+    //Formats the data in a feature collection trougth geoFormat()
+    var geoData = {type: "FeatureCollection", features: geoFormat(data)};
+
     //Draws the map and the points
-    function draw(countries)
-    {
+    let draw = (countries) => {
         //draw map
         var country = g.selectAll(".country").data(countries);
         country.enter().insert("path")
@@ -74,9 +78,14 @@ function map(data) {
                 .style("fill", "lightgray")
                 .style("stroke", "white");
 
-        //draw point        
-        var point //Complete the code
-    };
+        //draw point
+        points = g.selectAll(".point").data(geoData.features)
+        points.enter().append("circle")
+            .attr("class", "point")
+            .attr("cx", (d) => projection(d.geometry.coordinates)[0])
+            .attr("cy", (d) => projection(d.geometry.coordinates)[1])
+            .attr("r", '3px')
+    }
 
     //Filters data points according to the specified magnitude
     function filterMag(value) {
@@ -84,13 +93,16 @@ function map(data) {
     }
     
     //Filters data points according to the specified time window
-    this.filterTime = function (value) {
-        //Complete the code
+    this.filterTime = (extent) => {
+        console.log(extent)
+        points.style('display', (point) => (
+            extent[0] <= point.properties.time && point.properties.time <= extent[1]
+        ) ? null : 'none')
     };
 
     //Calls k-means function and changes the color of the points  
     this.cluster = function () {
-        //Complete the code
+
     };
 
     //Zoom and panning method
