@@ -57,7 +57,7 @@ function sp(bliCountries, countryColor){
             .call(xAxis)
             .append("text")
             .attr("class", "label")
-            .attr("x", width)
+            .attr("x", width - 50)
             .attr("y", -6)
             .text(xAttr)
             
@@ -69,6 +69,7 @@ function sp(bliCountries, countryColor){
             .attr("class", "label")
             .attr("transform", "rotate(-90)")
             .attr("y", 6)
+            .attr('dx', -50)
             .attr("dy", ".71em")
             .text(yAttr)
             
