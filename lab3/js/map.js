@@ -14,10 +14,12 @@ function map(data) {
 
     var timeExt = d3.extent(data.map((d) => d.time));
 
-    var filterdData = data;
+    let filteredData = data;
 
     //Sets the colormap
     var colors = colorbrewer.Set3[10];
+
+    let clusterColor = d3.scale.category10()
 
     //Assings the svg canvas to the map div
     var svg = d3.select("#map").append("svg")
@@ -51,24 +53,20 @@ function map(data) {
                 coordinates: [d.lon, d.lat]
             },
             properties: {
+                id: d.id,
                 place: d.place,
                 mag: d.mag,
-                time: d.time
+                time: d.time,
+                _cluster: d._cluster
             }
         }));
     }
 
-    //Loads geo data
-    d3.json("data/world-topo.json", function (error, world) {
-        var countries = topojson.feature(world, world.objects.countries).features;
-        draw(countries);
-    });
-
     //Formats the data in a feature collection trougth geoFormat()
-    var geoData = {type: "FeatureCollection", features: geoFormat(data)};
+    var geoData = () => ({type: "FeatureCollection", features: geoFormat(filteredData)})
 
     //Draws the map and the points
-    let draw = (countries) => {
+    let drawWorld = (countries) => {
         //draw map
         var country = g.selectAll(".country").data(countries);
         country.enter().insert("path")
@@ -77,15 +75,32 @@ function map(data) {
                 .style('stroke-width', 1)
                 .style("fill", "lightgray")
                 .style("stroke", "white");
+    }
 
-        //draw point
-        points = g.selectAll(".point").data(geoData.features)
-        points.enter().append("circle")
+    let drawPoints = () => {
+        points = g.selectAll(".point")
+            .data(geoData().features)
+            .style('display', null)
+            .style('fill', (d) => clusterColor(d.properties._cluster))
+
+        points.enter()
+            .append("circle")
             .attr("class", "point")
             .attr("cx", (d) => projection(d.geometry.coordinates)[0])
             .attr("cy", (d) => projection(d.geometry.coordinates)[1])
             .attr("r", '3px')
+            .style('fill', (d) => clusterColor(d.properties._cluster))
+
+        points.exit()
+            .style('display', 'none')
     }
+
+    //Loads geo data
+    d3.json("data/world-topo.json", function (error, world) {
+        var countries = topojson.feature(world, world.objects.countries).features;
+        drawWorld(countries);
+        drawPoints()
+    });
 
     //Filters data points according to the specified magnitude
     function filterMag(value) {
@@ -94,15 +109,21 @@ function map(data) {
     
     //Filters data points according to the specified time window
     this.filterTime = (extent) => {
-        console.log(extent)
-        points.style('display', (point) => (
-            extent[0] <= point.properties.time && point.properties.time <= extent[1]
-        ) ? null : 'none')
+        filteredData = data.filter((point) => (
+            extent[0] <= point.time && point.time <= extent[1]
+        ))
+
+        drawPoints()
     };
 
     //Calls k-means function and changes the color of the points  
-    this.cluster = function () {
-
+    this.cluster = () => {
+        filteredData = kmeans(
+            filteredData,
+            ['depth', 'mag'],
+            Number(document.getElementById('k').value)
+        )
+        drawPoints()
     };
 
     //Zoom and panning method

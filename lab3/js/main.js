@@ -7,6 +7,8 @@ d3.csv("data/data.csv", (d) => {
     d.lat = Number(d.lat)
     d.lon = Number(d.lon)
     d.mag = Number(d.mag)
+    d.depth = Number(d.depth)
+    d._cluster = null
     return d
 }, (data) => {
     area1 = new area(data);
