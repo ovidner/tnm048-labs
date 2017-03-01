@@ -47,7 +47,7 @@ function pc(){
         self.data = data;
         
         var k = 4;
-        var kmeansRes = kmeans(data,k);
+        var kmeansRes = kmeans(data, dimensions, k);
 
         draw(kmeansRes);
     });

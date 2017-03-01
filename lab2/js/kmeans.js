@@ -8,14 +8,8 @@ let arrayEquals = (array1, array2) => array1.every((_, index) => (
     array1[index] === array2[index]
 ))
 
-/**
-* k means algorithm
-* @param data
-* @param k
-* @return {Object}
-*/
 
-function kmeans(data, k) {
+const kmeans = (data, dimensions, k) =>{
 
     let centroid = (points) => dimensions.reduce((result, dimension) => (
         Object.assign({}, result, {
