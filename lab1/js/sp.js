@@ -8,12 +8,6 @@ function sp(bliCountries, countryColor){
         width = spDiv.width() - margin.right - margin.left,
         height = spDiv.height() - margin.top - margin.bottom;
 
-    //initialize color scale
-    //...
-    
-    //initialize tooltip
-    //...
-
     var xAttr = "Employment rate"
     var yAttr = "Water quality"
     var rAttr = "Life satisfaction"
