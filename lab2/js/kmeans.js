@@ -1,10 +1,8 @@
 
-function randomInt(max) {
-    return Math.floor(Math.random() * max)
-}
+const randomInt = (max) => Math.floor(Math.random() * max)
 
 // Naive check if two (equally long arrays) are equal
-let arrayEquals = (array1, array2) => array1.every((_, index) => (
+const arrayEquals = (array1, array2) => array1.every((_, index) => (
     array1[index] === array2[index]
 ))
 
